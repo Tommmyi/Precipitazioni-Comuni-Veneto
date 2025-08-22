@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aggiungi Valori Precipitazioni</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Aggiungi una nuova precipitazione</h1>
+
+    <!-- Form per inserire i dati. Aggiunto method POST per salvare nuovi valori -->
+    <form id="add-data-form" method="POST" action="/inserisci">
+      <div>
+        <label for="anno">Anno</label>
+        <input type="number" id="anno" name="anno" placeholder="Es. 2023" min="1950" max="2100" required />
+      </div>
+      <div>
+        <label for="comune">Comune</label>
+        <input type="text" id="comune" name="comune" placeholder="Inserisci il comune" required />
+      </div>
+
+      <!-- Campi per i mesi -->
+      <div>
+        <label for="gennaio">Gennaio</label>
+        <input type="number" id="gennaio" name="gennaio" placeholder="Valore Gennaio" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="febbraio">Febbraio</label>
+        <input type="number" id="febbraio" name="febbraio" placeholder="Valore Febbraio" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="marzo">Marzo</label>
+        <input type="number" id="marzo" name="marzo" placeholder="Valore Marzo" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="aprile">Aprile</label>
+        <input type="number" id="aprile" name="aprile" placeholder="Valore Aprile" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="maggio">Maggio</label>
+        <input type="number" id="maggio" name="maggio" placeholder="Valore Maggio" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="giugno">Giugno</label>
+        <input type="number" id="giugno" name="giugno" placeholder="Valore Giugno" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="luglio">Luglio</label>
+        <input type="number" id="luglio" name="luglio" placeholder="Valore Luglio" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="agosto">Agosto</label>
+        <input type="number" id="agosto" name="agosto" placeholder="Valore Agosto" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="settembre">Settembre</label>
+        <input type="number" id="settembre" name="settembre" placeholder="Valore Settembre" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="ottobre">Ottobre</label>
+        <input type="number" id="ottobre" name="ottobre" placeholder="Valore Ottobre" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="novembre">Novembre</label>
+        <input type="number" id="novembre" name="novembre" placeholder="Valore Novembre" min="0" max="5000" />
+      </div>
+      <div>
+        <label for="dicembre">Dicembre</label>
+        <input type="number" id="dicembre" name="dicembre" placeholder="Valore Dicembre" min="0" max="5000" />
+      </div>
+
+      <!-- Campo per la somma totale, calcolata automaticamente -->
+      <div>
+        <label for="sommaTotale">Somma Totale</label>
+        <input type="number" id="sommaTotale" name="sommaTotale" placeholder="Somma Totale" readonly required />  <!-- Forndamentale che non si può eliminare dato l'attributo readonly required-->
+      </div>
+
+      <!-- Pulsante di submit -->
+      <button type="submit">Aggiungi</button>
+    </form>
+
+    <!-- Div per mostrare il feedback dell'operazione -->
+    <div id="result"></div>
+
+    <!-- Div per visualizzare l'ultimo record aggiunto -->
+    <div id="new-data-container"></div>
+
+    <!-- Pulsante per tornare alla Home -->
+    <button type="button" class="home-btn" onclick="location.href='/Home'">
+      🏠 Torna alla Home
+    </button>
+  </div>
+
+  <script>
+    // Array con i nomi dei campi dei mesi per iterare
+    const mesiTotali = [
+      "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+      "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"
+    ];
+
+    // Funzione per aggiornare la somma totale dei mesi
+    function aggiornamentoSomma() {
+      let total = 0;
+      mesiTotali.forEach(mese => {
+        // Prende i valori dei mesi li converte in float e li somma 
+        const val = parseFloat(document.getElementById(mese).value) || 0;
+        total += val;
+      });
+      document.getElementById("sommaTotale").value = total;
+    }
+
+    // Normalizza il nome del comune: trim, spazi singoli, minuscolo, rimuove accenti, capitalizza ogni parola
+    function normalizzaComune(str) {
+      return str
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .split(" ")
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ");
+    }
+
+    // Gestione del submit del form per aggiungere i dati
+    async function gestioneSubmit(event) {
+      event.preventDefault(); // Previene il refresh della pagina
+
+      const anno = document.getElementById("anno").value;
+      const rawComune = document.getElementById("comune").value;
+      const comune = normalizzaComune(rawComune); // Applica normalizzazione
+      const mesi = {};
+      // Prende dalla form tutti i valori delle precipitazioni dei mesi
+      mesiTotali.forEach(mese => {
+        const val = document.getElementById(mese).value;
+        mesi[mese] = val === "" ? "0" : val;  // Se vuoto, considera 0
+      });
+      const sommaTotale = document.getElementById("sommaTotale").value;
+      const data = { anno, comune, ...mesi, sommaTotale };
+
+      try {
+        // Effettua una richiesta POST per salvare i dati inseriti
+        const response = await fetch("/inserisci", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data) // converte data in JSON
+        });
+
+        const resultDiv = document.getElementById("result");
+        
+        // Se la risposta HTTP è andata a buon fine inserisce il valore nel div corrispondente
+        if (response.ok) {
+          resultDiv.textContent = "Dato aggiunto con successo!";
+
+          // Crea la visualizzazione del record aggiunto: Anno|Comune|Mesi|SommaTotale
+          let recordText = `Anno: ${anno} | Comune: ${comune}`;
+          mesiTotali.forEach(mese => {
+            const nomeMese = mese.charAt(0).toUpperCase() + mese.slice(1);
+            recordText += ` | ${nomeMese}: ${mesi[mese]}`;
+          });
+          recordText += ` | Somma Totale: ${sommaTotale}`;
+
+          // Mostra solo l'ultimo record inserito
+          const newRecord = document.createElement("div");
+          newRecord.classList.add("new-data-row");
+          newRecord.textContent = recordText;
+          const container = document.getElementById("new-data-container");
+          container.innerHTML = "";
+          container.appendChild(newRecord);
+        } else {
+          resultDiv.textContent = `Errore nell'aggiunta del dato (${response.status})`;
+        }
+      } catch (error) {
+        console.error("Errore nella connessione al server:", error);
+        document.getElementById("result").textContent = "Errore nella connessione al server.";
+      }
+    }
+    // Cancella il contenuto dei div result e new-data-container dopo ogni modifica
+    function aggiungiListenerInputForm() {
+      const inputs = document.querySelectorAll('#add-data-form input');
+      inputs.forEach(input => {
+        input.addEventListener('input', () => {
+          document.getElementById("new-data-container").innerHTML = "";
+          document.getElementById("result").innerText = "";
+        });
+      });
+    }
+
+    // Al caricamento della pagina: inizializza somma e registra i listener
+    document.addEventListener("DOMContentLoaded", () => {
+      aggiornamentoSomma(); // Calcola somma iniziale
+      mesiTotali.forEach(mese => {
+        document.getElementById(mese).addEventListener("input", aggiornamentoSomma);
+      });
+      document.getElementById("add-data-form")
+              .addEventListener("submit", gestioneSubmit);
+      aggiungiListenerInputForm();
+    });
+  </script>
+</body>
+</html>

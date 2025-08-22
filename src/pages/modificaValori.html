@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modifica Valori Precipitazioni</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Modifica una precipitazione</h1>
+    <div class="contenuto-principale">
+      <div class="contenitore-form">
+        <form id="modifica-form" method="POST" action="/modifica">
+          <!-- Campo nascosto per indicare al server che si tratta di una PUT -->
+          <input type="hidden" name="_method" value="PUT">
+          
+          <div>
+            <label for="anno">Anno:</label>
+            <input type="number" id="anno" name="anno" placeholder="Inserisci l'anno" required>
+          </div>
+          <div>
+            <label for="comune">Comune:</label>
+            <input type="text" id="comune" name="comune" placeholder="Inserisci il comune" required>
+          </div>
+          <div>
+            <label for="mese">Mese:</label>
+            <input type="text" id="mese" name="mese" placeholder="Inserisci il mese" required>
+          </div>
+          <div>
+            <label for="nuovaQuantita">Nuova quantità precipitazioni:</label>
+            <input type="number" id="nuovaQuantita" name="nuovaQuantita" placeholder="Inserisci la nuova quantità" min="0" max="5000" required>
+          </div>
+          
+          <button type="submit">Modifica</button>
+        </form>
+
+        <!-- Bottone per tornare alla Home -->
+        <button class="home-btn" onclick="location.href='/Home'">🏠 Torna alla Home</button>
+
+        <!-- Div per messaggi di esito o errore -->
+        <div id="messaggio"></div>
+        
+        <!-- Div per visualizzare il record modificato -->
+        <div id="contenitore-nuovi-dati"></div>
+      </div>
+    </div>
+  </div>      
+
+  <!-- Aside con l'elenco dei comuni -->
+  <aside id="comuni-list">
+    <h2>Elenco Comuni</h2>
+    <ul id="comuni-list-content"></ul>
+  </aside>
+
+  <script>
+    let datiCSV = [];
+
+    // Scarica il CSV e aggrega comuni con set di anni, mantenendo l'ordine
+    async function caricaDatiCSV() {
+      try {
+        const risposta = await fetch('/dataVenetomm');
+        if (!risposta.ok) {
+          document.getElementById('messaggio').innerText = `Errore HTTP: ${risposta.status}`;
+          return;
+        }
+
+        const testo = await risposta.text();
+        const righe = testo.trim().split('\n').map(riga =>
+          riga.split(';').map(cella => cella.trim().replace(/^"|"$/g, ''))
+        );
+        if (righe.length < 2) return;
+        datiCSV = righe;
+        const intestazione = righe[0];
+
+        // Trova indici colonne 'Comune' e 'Anno'
+        const indiceComune = intestazione.findIndex(h =>
+          h.toLowerCase().includes("comune")
+        );
+        const indiceAnno = intestazione.findIndex(h =>
+          h.toLowerCase().includes("anno")
+        );
+        if (indiceComune === -1 || indiceAnno === -1) {
+          console.error("Colonne 'Comune' o 'Anno' non trovate");
+          return;
+        }
+
+        // Costruisce mappa: comune → Set di anni
+        let mappaAnni = {};
+        let ordineComuni = [];
+        righe.slice(1).forEach(riga => {
+          const comune = riga[indiceComune];
+          const anno = riga[indiceAnno];
+          if (comune && anno) {
+            if (!mappaAnni.hasOwnProperty(comune)) {
+              mappaAnni[comune] = new Set();
+              ordineComuni.push(comune);
+            }
+            mappaAnni[comune].add(anno);
+          }
+        });
+
+        aggiornaListaComuni(mappaAnni, ordineComuni, 'comuni-list-content');
+      } catch (errore) {
+        console.error("Errore caricamento dati:", errore);
+      }
+    }
+
+    // Popola la lista dei comuni con il range di anni
+    function aggiornaListaComuni(mappaAnni, ordineComuni, listId) {
+      const lista = document.getElementById(listId);
+      lista.innerHTML = "";
+      ordineComuni.forEach(comune => {
+        const anni = Array.from(mappaAnni[comune]).sort((a, b) => parseInt(a) - parseInt(b));
+        const testoAnni = anni.length === 1 ? anni[0] : `${anni[0]}–${anni[anni.length - 1]}`;
+        const li = document.createElement('li');
+        li.textContent = `${comune} ${testoAnni}`;
+        li.addEventListener('click', () => {
+          document.getElementById('comune').value = comune;
+          document.getElementById('anno').value = "";
+        });
+        lista.appendChild(li);
+      });
+    }
+
+    // Gestisce l'invio del form di modifica
+    async function gestisciInvioModifica(event) {
+      event.preventDefault();  // Preveniente il caricamento della pagina
+      
+      // Elimina eventuali spazi su ogni campo del form
+      const comune = document.getElementById('comune').value.trim();
+      const anno = document.getElementById('anno').value.trim();
+      const mese = document.getElementById('mese').value.trim();
+      const nuovaQuantita = parseFloat(document.getElementById('nuovaQuantita').value);
+      
+      //Inserisce i valori in una variabile dati che rappresenterà il body della richiesta http
+      const dati = { comune, anno, mese, nuovaQuantita };
+
+      try {
+        // Invia una richiesta HTTP di tipo PUT all'endpoint /modifica presente nel server.js
+        const risposta = await fetch('/modifica', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dati)
+        });
+        
+        const risultatoJson = await risposta.json();
+        
+        // Variabile che rappresenta l'esito del messaggio di modifica
+        const messaggioDiv = document.getElementById('messaggio');
+
+        // Se il server restituisce true allora la modifica è stata effettuata correttamente
+        if (risposta.ok) {
+          messaggioDiv.innerText = "Modifica completata!";
+          const nuovoRecord = document.createElement("div");
+          nuovoRecord.classList.add("new-data-row");
+          // Text che rappresenta i dati modificati corretti
+          nuovoRecord.textContent = `Modificati correttamente: -> Anno: ${anno} | Comune: ${comune} | Mese: ${mese} | Quantità: ${nuovaQuantita}`;
+          const contenitore = document.getElementById("contenitore-nuovi-dati");
+          contenitore.innerHTML = "";
+          contenitore.appendChild(nuovoRecord);
+        } else {
+          messaggioDiv.innerText = `Valore non presente: Errore (${risposta.status})`;
+        }
+      } catch (errore) {
+        document.getElementById('messaggio').innerText = "Errore di connessione al server.";
+      }
+    }
+
+    window.addEventListener('load', () => {
+      caricaDatiCSV();
+      document.getElementById('modifica-form').addEventListener('submit', gestisciInvioModifica);
+    });
+  </script>
+</body>
+</html>

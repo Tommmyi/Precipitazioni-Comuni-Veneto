@@ -1,0 +1,62 @@
+/* === BASE === */
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #e3f2fd;
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.5rem;
+  color: #1565c0;
+}
+
+/* === TABELLA === */
+table {
+  width: 90%;
+  max-width: 1200px;
+  margin: 20px auto;
+  border-collapse: collapse;
+  background-color: #ffffff;
+}
+
+th {
+  background-color: #2196f3;
+  color: #ffffff;
+  padding: 12px;
+}
+
+td {
+  border: 1px solid #bbdefb;
+  padding: 12px;
+  text-align: left;
+}
+
+tr:nth-child(even) {
+  background-color: #bbdefb;
+}
+
+tr:hover {
+  background-color: #64b5f6;
+}
+
+/* === PULSANTI === */
+button {
+  padding: 12px 20px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 5px;
+  background: linear-gradient(to bottom, #64b5f6, #1565c0);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: linear-gradient(to bottom, #42a5f5, #0d47a1);
+}
+button:active {
+  transform: scale(0.95);
+
+}
+

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ricerca Dati OpenData</title>
+  <link rel="stylesheet" href="css/ricerca.css" />
+</head>
+<body>
+  <h1>Seleziona Anno e Comune</h1>
+
+  <div class="container">
+    <!-- Form per ricerca dei dati-->
+    <form id="form-ricerca">
+      <!-- Input type che rappresentano l'anno e il comune-->
+      <label for="anno">Anno:</label>
+      <input type="number" id="anno" placeholder="Inserisci anno" min="1900" max="2100"/>
+
+      <label for="comune">Comune:</label>
+      <input type="text" id="comune" placeholder="Inserisci comune" required/>
+
+      <button type="submit">Cerca</button>
+    </form>
+
+    <!-- Pulsante per tornare alla Home -->
+    <div class="home-button-container">
+      <button type="button" class="home-btn" onclick="location.href='/Home'">🏠 Torna alla Home</button>
+    </div>
+  </div>
+  
+  <!-- Div per mostrare il feedback dell'operazione -->
+  <br><div id="risultato"></div>
+  
+  <!-- Aside: visualizza la lista dei comuni (con il range di anni) ottenuta dal CSV -->
+  <aside id="lista-comuni">
+    <h2>Elenco Comuni</h2>
+    <ul id="lista-comuni-contenuto"></ul>
+  </aside>
+  
+  <script>
+    let datiCSV = [];
+
+    // 1. Carica il CSV, costruisce mappa Comune → Set di anni e aggiorna l’aside
+    async function caricaDatiCSV() {
+      
+      // Fa una richiesta per recuperare il file dataVenetomm.CSV contenenti i dati delle                precipitazioni
+      const risposta = await fetch('/dataVenetomm');
+      
+      // Verifica che la risposta HTTP sia andata a buon fine (status 200–299)
+      if (!risposta.ok)
+        throw new Error(`HTTP ${risposta.status}`);
+
+      //Legge il body della risposta come testo 
+      const testo = await risposta.text();
+      
+      //trim() evita spazi vuoti, split() divide il testo in righe e ogni valore diviso in ";" e rimuove eventuali virgolette obsolete
+      const righe = testo.trim().split('\n').map(r => r.split(';').map(c =>     c.trim().replace(/^"|"$/g, '')));
+
+      // Se non ci sono dati oltre all'intestazione, interrompe l’esecuzione
+      if (righe.length < 2)
+        return;
+      
+      datiCSV = righe;
+
+      // Estrae l'intestazione per identificare gli indici delle colonne "Comune" ed "Anno"
+      const intestazione = righe[0];
+      const idxComune = intestazione.findIndex(h => h.toLowerCase().includes("comune"));
+      const idxAnno   = intestazione.findIndex(h => h.toLowerCase().includes("anno"));
+      
+      // Se non trova le colonne "Comune" o "Anno", interrompe l’esecuzione
+      if (idxComune < 0 || idxAnno < 0)
+        return;
+
+      // Si costruisce una mappa dove ogni comune corrisponde un Set di anni 
+      const mappaComuni = {};
+      righe.slice(1).forEach(riga => {
+        const comune = riga[idxComune];
+        const anno = riga[idxAnno];
+        
+        // Salta righe incomplete o mancanti
+        if (!comune || !anno) 
+          return;
+        
+        // Invece se il comune non è nella mappa, crea un nuovo Set con il relativo anno
+        if (!mappaComuni[comune]) 
+          mappaComuni[comune] = new Set();
+        mappaComuni[comune].add(anno);
+      });
+
+      // Aggiorna la sidebar 
+      aggiornaListaComuni(mappaComuni);
+    }
+
+    // 2. Popola l’aside con i comuni e il range di anni
+    function aggiornaListaComuni(mappa) {
+      const ul = document.getElementById('lista-comuni-contenuto');  // Id che rappresenta la lista ul dei comuni nella sidebar
+      ul.innerHTML = '';
+
+      // Itera sulle coppie [comune, Set<anni>]: l’ordine sarà quello di inserimento in mappa
+      Object.entries(mappa).forEach(([comune, anniSet]) => {
+        const li = document.createElement('li');
+        
+        // Ordina gli anni numericamente in ordine di inserimento 
+        const anniOrdinati = Array.from(anniSet).sort((a, b) => parseInt(a) - parseInt(b)).join(', ');
+        
+        li.textContent = `${comune} (${anniOrdinati})`;
+        
+        // Quando viene cliccato il comune nella sidebar alterale, viene settato nel input-type specifico del comune
+        li.addEventListener('click', () => {
+          document.getElementById('comune').value = comune;
+        });
+        ul.appendChild(li);
+      });
+    }
+
+
+    // 3. Gestisce la ricerca e costruisce la tabella
+    function filtraDati(event) {
+      event.preventDefault();  // Previene di aggiornare la pagina
+      
+      // Recupera i valori inseriti dall'utente eliminando eventuali spazi con la funziona trim()
+      const comune = document.getElementById('comune').value.trim();
+      const anno   = document.getElementById('anno').value.trim();
+
+      // Estrae l’intestazione del CSV e individua gli indici delle colonne "Comune" e "Anno"
+      const header = datiCSV[0];
+      const idxC = header.findIndex(h => h.toLowerCase().includes("comune"));
+      const idxA = header.findIndex(h => h.toLowerCase().includes("anno"));
+
+      // Filtra tutte le righe escludendo l’intestazione, perchè slice(1) salta l'intestazione in base a comune e, se fornito, anno
+      const righeFiltrate = datiCSV.slice(1).filter(r => {
+        return r[idxC] === comune && (anno ? r[idxA] === anno : true);
+      });
+
+      // Seleziona il contenitore dei risultati 
+      const contenitore = document.getElementById('risultato');
+      contenitore.innerHTML = '';  // resetta il risultato
+
+      // Se non ci sono righe corrispondenti, mostra un messaggio 
+      if (!righeFiltrate.length) {
+        contenitore.innerHTML = '<p id="risultato">Nessun dato trovato</p>';
+
+        return;
+      }
+      
+      // Crea la tabella e il suo header
+      const tabella = document.createElement('table');
+      const trH = document.createElement('tr');
+      header.forEach(c => {
+        const th = document.createElement('th');
+        th.textContent = c;
+        trH.appendChild(th);
+      });
+      tabella.appendChild(trH);
+      
+      // Popola la tabella con le righe filtrate
+      righeFiltrate.forEach(r => {
+        const tr = document.createElement('tr');
+        r.forEach(c => {
+          const td = document.createElement('td');
+          td.textContent = c;
+          tr.appendChild(td);
+        });
+        tabella.appendChild(tr);
+      });
+      
+      // Inserisce la tabella sotto il form
+      contenitore.appendChild(tabella);
+    }
+
+    // 4. Al caricamento: avvia load e registra listener
+    window.addEventListener('load', () => {
+      caricaDatiCSV();
+      document.getElementById('form-ricerca').addEventListener('submit', filtraDati);
+    });
+  </script>
+
+</body>
+</html>

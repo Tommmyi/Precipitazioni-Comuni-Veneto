@@ -1,0 +1,182 @@
+/* ====================================
+   IMPOSTAZIONI GLOBALI
+   ==================================== */
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: #ffffff;
+  background: url("https://cdn.glitch.global/6ef417aa-42e7-4de3-805e-b994c0c4bb28/sfondoHome.jpeg?v=1751375488858") no-repeat center center fixed; /* Link Asset immagine */
+  background-size: cover;
+  text-shadow: 1px 1px 3px #000000;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: -1;
+}
+
+/* ====================================
+   LAYOUT PRINCIPALE
+   ==================================== */
+
+.parent {
+  display: grid;
+  grid-template-columns: 1fr 3fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 20px;
+  padding: 2rem;
+}
+
+/* ====================================
+   SEZIONI
+   ==================================== */
+
+/* HEADER */
+.div1 {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* BOTTONI */
+.div2 {
+  grid-column: 1 / -1;  /* Occupa l'intera larghezza */
+  grid-row: 2;
+  display: flex;  
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+/* FOOTER */
+.div3 {
+  grid-column: 2;
+  grid-row: 3;
+  background: rgba(227, 242, 253, 0.9);
+  padding: 2rem;
+  border-radius: 15px;
+  color: black;
+  text-align: center;
+}
+
+/* ====================================
+   ELEMENTI DECORATIVI
+   ==================================== */
+
+.icon-header {
+  font-size: 60px;
+  color: #2196f3;
+  margin-bottom: 1rem;
+}
+
+/* ====================================
+   BOTTONI
+   ==================================== */
+
+.nav-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  border: none;  /*toglie bordo nero*/
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.nav-button:hover {
+  transform: translateY(-2px);   /*Alza di -2 asse y il bottone*/
+}
+
+/* Colori e hover dei bottoni */
+.nav-button.search {
+  background-color: #1565c0;
+}
+.nav-button.search:hover {
+  background-color: #0d47a1;
+}
+
+.nav-button.view {
+  background-color: #00acc1;
+}
+.nav-button.view:hover {
+  background-color: #00838f;
+}
+
+.nav-button.add {
+  background-color: #43a047;
+}
+.nav-button.add:hover {
+  background-color: #2e7d32;
+}
+
+.nav-button.edit {
+  background-color: #fb8c00;
+}
+.nav-button.edit:hover {
+  background-color: #ef6c00;
+}
+
+.nav-button.delete {
+  background-color: #e53935;
+}
+.nav-button.delete:hover {
+  background-color: #c62828;
+}
+
+.nav-button.map {
+  background-color: #8e24aa;
+}
+.nav-button.map:hover {
+  background-color: #6a1b9a;
+}
+
+/* ====================================
+   Media-Query per Mobile e Tablet
+   ==================================== */
+
+/*Si riduce da 3 colonne ad un unica sola colonna*/
+@media (max-width: 768px) {
+  .parent {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    padding: 1rem;
+    gap: 15px;
+  }
+
+  .div1,
+  .div2,
+  .div3 {
+    grid-column: 1;
+  }
+
+  .div1 {
+    padding: 1rem;
+  }
+
+  .div2 {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .div3 {
+    padding: 1.5rem;
+  }
+
+  .nav-button {
+    width: 90%;
+    max-width: 300px;
+    margin: 0.5rem 0;
+  }
+
+  .icon-header {
+    font-size: 40px;
+  }
+}

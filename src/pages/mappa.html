@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mappa Precipitazioni - Regione Veneto</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="css/mappa.css">
+  <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" crossorigin=""></script>
+</head>
+<body>
+  <h1>Mappa Precipitazioni - Regione Veneto</h1>
+  <div class="buttons">
+    <button onclick="location.href='/Home'">🏠 Torna alla Home</button>
+  </div>
+  <div class="map-container">
+    <div id="map"></div>
+    <!-- Leggenda posizionata in basso a destra della mappa -->
+    <div id="legend">
+      <h3>Legenda</h3>
+      <div class="legend-item">
+        <span class="color-box low"></span>
+        <span class="label">Basse (&lt; 800 mm)</span>
+      </div>
+      <div class="legend-item">
+        <span class="color-box medium"></span>
+        <span class="label">Medie (800–1400 mm)</span>
+      </div>
+      <div class="legend-item">
+        <span class="color-box high"></span>
+        <span class="label">Alte (&gt; 1400 mm)</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Inizializza la mappa
+    const map = L.map("map").setView([45.5, 11.5], 8);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "&copy; Contribuenti OpenStreetMap"
+    }).addTo(map);
+
+    // Funzione che in base alla somma totale di precipitazioni colora il popup di colore verde/giallo/rosso
+    function ottieniColore(somma) {
+      if (somma < 800) {
+        return "#a8e6cf";  // Verde chiaro
+      } else if (somma <= 1400) {
+        return "#ffeb3b";  // Giallo
+      } else {
+        return "#ff8a80";  // Rosso chiaro
+      }
+    }
+
+    // Funzione che sceglie l'emoji in base alla somma totale di precipitazioni
+    function ottieniEmoji(somma) {
+      if (somma < 800) {
+        return "🌦";
+      } else if (somma <= 1400) {
+        return "🌧";
+      } else {
+        return "⛈";
+      }
+    }
+
+    
+    let datiPerComune = {};
+
+    // Carica il file JSON con le coordinate dei comuni usando la fetch /coordinateComuni presente in server.js
+    async function caricaCoordinateJson() {
+      try {
+        const res = await fetch("/coordinateComuni");
+        return await res.json();
+      } catch (e) {
+        console.error("Errore caricamento coordinate:", e);
+        return {};
+      }
+    }
+
+    // Funzione che preleva dal csv i dati e li mette in un array di colonne
+    async function caricaPrecipitazioni() {
+      try {
+        const res = await fetch("/dataVenetomm");
+        const text = await res.text();
+        const rows = text.trim().split("\n").slice(1);  // Separa in righe saltando l'intestazione
+        return rows.map(row => {
+          const cols = row.replace(/"/g, "").trim().split(";");
+          const somma = parseFloat(cols[14] || cols[13]);
+          return {
+            anno: cols[0],
+            comune: cols[1],
+            gen: cols[2],
+            feb: cols[3],
+            mar: cols[4],
+            apr: cols[5],
+            mag: cols[6],
+            giu: cols[7],
+            lug: cols[8],
+            ago: cols[9],
+            set: cols[10],
+            ott: cols[11],
+            nov: cols[12],
+            dic: cols[13],
+            somma: somma
+          };
+        });
+      } catch (e) {
+        console.error("Errore caricamento dati precipitazioni:", e);
+        return [];
+      }
+    }
+
+    // Funzione che raggruppa  i comuni e li inserisce con il metodo push dentro ogni record
+    function raggruppaPerComune(records) {
+      const raggruppati = {};
+      for (const r of records) {
+        // Se il nome del comune non è presente lo inserisce vuoto altrimenti lo inserisce nella mappa
+        if (!raggruppati[r.comune]) 
+          raggruppati[r.comune] = [];
+        raggruppati[r.comune].push(r);
+      }
+      return raggruppati;
+    }
+
+    // Funzione che genera i dettagli html di ciascun popup delle precipitazioni
+    function generaDettagliHtml(record) {
+      const somma = 
+        parseFloat(record.gen) + parseFloat(record.feb) + parseFloat(record.mar) +
+        parseFloat(record.apr) + parseFloat(record.mag) + parseFloat(record.giu) +
+        parseFloat(record.lug) + parseFloat(record.ago) + parseFloat(record.set) +
+        parseFloat(record.ott) + parseFloat(record.nov) + parseFloat(record.dic);
+
+      const emoji = ottieniEmoji(somma); // Ora usa la somma aggiornata
+
+      const html = `
+        <table>
+          <tr><td>GEN:</td><td>${record.gen}</td></tr>
+          <tr><td>FEB:</td><td>${record.feb}</td></tr>
+          <tr><td>MAR:</td><td>${record.mar}</td></tr>
+          <tr><td>APR:</td><td>${record.apr}</td></tr>
+          <tr><td>MAG:</td><td>${record.mag}</td></tr>
+          <tr><td>GIU:</td><td>${record.giu}</td></tr>
+          <tr><td>LUG:</td><td>${record.lug}</td></tr>
+          <tr><td>AGO:</td><td>${record.ago}</td></tr>
+          <tr><td>SET:</td><td>${record.set}</td></tr>
+          <tr><td>OTT:</td><td>${record.ott}</td></tr>
+          <tr><td>NOV:</td><td>${record.nov}</td></tr>
+          <tr><td>DIC:</td><td>${record.dic}</td></tr>
+          <tr>
+            <td><b>Totale:</b></td>
+            <td><b>${somma} <span>${emoji}</span></b></td>
+          </tr>
+        </table>`;
+
+      // Ritorna sia html che somma
+      return { html, somma };
+    }
+
+    // Funzione che crea il popup blu nella mappa
+    function creaPopup(comune, records) {
+      
+      // Genera i dettagli HTML a partire dal primo record disponibile record[0]
+      const dettagli = generaDettagliHtml(records[0]);
+      
+      // Calcola il colore dello sfondo in base alla somma delle precipitazioni
+      const colore  = ottieniColore(dettagli.somma);
+      
+      // Ottiene un'emoji in base alla quantità di precipitazioni
+      const emoji   = ottieniEmoji(dettagli.somma);
+
+      // Se ci sono più anni registrati, crea un menu a tendina per selezionare l’anno traite il tag select e con i relativi option (opzioni)
+      // Variabile utile perchè visibile solo all'interno della funzione (privata)
+      let select = "";
+      if (records.length > 1) {
+        select = `<select id="annoSelect_${comune}" onchange="onCambiaAnno('${comune}')">`;
+        records.forEach((r, i) => {
+          select += `<option value="${i}">${r.anno}</option>`;
+        });
+        select += `</select>`;
+      }
+
+      // Alla fine restituisce l’intero blocco HTML che si è creato
+      return `
+        <div style="background:${colore}; padding:5px; border-radius:5px;">
+          <b id="popupTitle_${comune}">${comune} ${emoji}</b><br>
+          Anno: 
+          <span id="annoLabel_${comune}">${records[0].anno}</span> ${select}<br>
+          <div id="popupContent_${comune}">
+            ${dettagli.html}
+          </div>
+        </div>
+      `;
+    }
+
+
+    // Cambia i valori delle precipitazioni in base all'anno selezionato nel menu a tendina (ID annoSelect_$ = annoSelect_ )
+    window.onCambiaAnno = function(comune) {
+      
+      // Ottiene l'anno selezionato cliccato sulla tendina
+      const select = document.getElementById("annoSelect_" + comune);
+      const idx    = select.value;
+      const record = datiPerComune[comune][idx];
+      
+      // Genera il contneuto html tramite la funzione generaDettagliHtml()
+      const dettagli = generaDettagliHtml(record);
+
+      // Aggiorna il contenuto della tabella nel pop-up
+      document.getElementById("popupContent_" + comune).innerHTML = dettagli.html;
+
+      // Aggiorna il colore di sfondo 
+      const colore = ottieniColore(dettagli.somma);
+      select.closest("div").style.background = colore;
+
+      // Mostra l'anno selezionato nell'etichetta del pop-up
+      document.getElementById("annoLabel_" + comune).innerText = record.anno;
+
+      // Viene inserito l'emoji specifico accanto al comune
+      const emoji = ottieniEmoji(dettagli.somma);
+      document.getElementById("popupTitle_" + comune).innerText = `${comune} ${emoji}`;
+    };
+
+
+    // Funzione finale che carica CSV delle coordinate e delle precipitazioni e raggrummaneti dei vari comuni
+    async function setup() {
+      const coordsData = await caricaCoordinateJson();
+      const precipData = await caricaPrecipitazioni();
+      datiPerComune = raggruppaPerComune(precipData);
+
+      // Per ogni comune recupera latitudine/longitudine  (coords[0] e coords[1])
+      for (const comune in datiPerComune) {
+        const coords = coordsData[comune];
+        
+        // Se le coordinate sono valide crea il popup/marker e lo aggiunge nella mappa (addTo(map))
+        if (coords && !isNaN(coords[0]) && !isNaN(coords[1])) {
+          const marker = L.marker(coords).addTo(map);
+          const popupContent = creaPopup(comune, datiPerComune[comune]); // Invoca metodo creaPopup precedente per crearlo
+          marker.bindPopup(popupContent);
+        }
+      }
+    }
+    // Avvia tutto il flusso di esecuzione del codice
+    window.onload = setup;
+  </script>
+</body>
+</html>

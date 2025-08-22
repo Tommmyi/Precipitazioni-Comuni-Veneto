@@ -1,0 +1,177 @@
+/* Reset di base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "HK Grotesk", sans-serif;
+  background: linear-gradient(to bottom, #B3E5FC, #64B5F6);
+  text-align: center;
+  padding: 1.5rem;
+}
+
+/* Titolo */
+h1 {
+  color: #1565C0;
+  font-size: 2.8rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+/* Contenitore principale */
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Form di ricerca */
+#form-ricerca {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+#form-ricerca label {
+  font-weight: bold;
+  margin: 10px 0 5px;
+}
+
+#form-ricerca input {
+  padding: 10px;
+  border: 2px solid #1565C0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.3s ease-in-out;
+}
+
+#form-ricerca input:focus {
+  background-color: #E3F2FD;
+  outline: none;
+}
+
+/* Pulsante Cerca */
+#form-ricerca button {
+  margin-top: 15px;
+  padding: 12px 20px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #42A5F5, #1565C0);
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+#form-ricerca button:hover {
+  background: linear-gradient(to bottom, #64B5F6, #0D47A1);
+  transform: scale(1.05);
+}
+
+#form-ricerca button:active {
+  transform: scale(0.95);
+}
+
+/* Sidebar – Elenco Comuni */
+aside#lista-comuni {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 250px;
+  height: 100vh;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+  padding: 1.5rem;
+}
+
+aside#lista-comuni h2 {
+  font-size: 1.8rem;
+  color: #1565C0;
+}
+
+aside#lista-comuni ul {
+  list-style: none;
+  padding: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+aside#lista-comuni ul li {
+  padding: 10px;
+  border-bottom: 1px solid #cccccc;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+aside#lista-comuni ul li:hover {
+  background-color: #42A5F5;
+  color: white;
+  transition: background-color 0.3s ease;
+}
+
+/* Risultati di ricerca – Tabella */
+#risultato table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+#risultato th,
+#risultato td {
+  border: 1px solid #ccc;
+  padding: 12px;
+  text-align: left;
+}
+
+#risultato th {
+  background-color: #1565C0;
+  color: white;
+}
+
+#risultato tr:nth-child(even) {
+  background-color: rgba(100, 181, 246, 0.15);
+}
+
+#risultato tr:hover {
+  background-color: #42A5F5;
+  transition: background-color 0.3s ease;
+}
+
+/* Pulsante "Torna alla Home" */
+.home-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.home-button-container button {
+  padding: 12px 20px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(to bottom, #64B5F6, #1565C0);
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.home-button-container button:hover {
+  background: linear-gradient(to bottom, #42A5F5, #0D47A1);
+  transform: scale(1.05);
+}
+
+.home-button-container button:active {
+  transform: scale(0.95);
+}

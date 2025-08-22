@@ -1,0 +1,163 @@
+/* Reset e box-sizing */
+* {
+  box-sizing: border-box;
+}
+
+/* Corpo della pagina */
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #74ABE2, #5563DE);
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  color: #333333;
+}
+
+/* Container del form */
+.container {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  width: 90%;
+  max-width: 600px;
+}
+
+/* Titolo */
+h1 {
+  text-align: center;
+  color: #5563DE;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+/* Ogni gruppo di campo */
+form div {
+  margin-bottom: 15px;
+}
+
+/* Label dei campi */
+label {
+  font-size: 14px;
+  margin-bottom: 5px;
+  display: block;
+  color: #555555;
+}
+
+/* Stili per gli input */
+input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dddddd;
+  border-radius: 5px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+input:focus {
+  border-color: #5563DE;
+}
+
+/* Pulsante di submit*/
+button[type="submit"] {
+  width: 100%;
+  background: #ffffff;
+  border: 2px solid #5563DE;
+  border-radius: 5px;
+  color: #5563DE;
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+
+button[type="submit"]:hover {
+  background: #5563DE;
+  color: #ffffff;
+}
+
+/* Pulsante per tornare alla Home */
+.home-btn {
+  margin-top: 15px;
+  background: #ffffff;
+  border: 2px solid #5563DE;
+  color: #5563DE;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+.home-btn:hover {
+  background: #5563DE;
+  color: #ffffff;
+}
+
+/* Feedback */
+#result {
+  text-align: center;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+/* Feedback */
+#messaggio {
+  text-align: center;
+  margin-top: 12px;
+  font-weight: bold;
+}
+
+/* Stile per la riga del nuovo dato */
+.new-data-row {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #5563DE;
+  background-color: #f0f4ff;
+  color: #333333;
+  font-size: 14px;
+  border-radius: 5px;
+  text-align: left;
+}
+
+/* Sidebar - Elenco Comuni */
+aside#comuni-list {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 250px;
+  height: 100vh;
+  overflow-y: auto;
+  background: rgba(255,255,255,0.95);
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+  padding: 1.5rem;
+}
+
+aside#comuni-list h2 {
+  font-size: 1.8rem;
+  color: #5563DE;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+aside#comuni-list ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+aside#comuni-list ul li {
+  padding: 10px;
+  border-bottom: 1px solid #cccccc;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+aside#comuni-list ul li:hover {
+  background-color: #42A5F5;
+  color: white;
+  transition: background 0.3s;
+}

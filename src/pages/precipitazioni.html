@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabella Dati OpenData</title>
+  <link rel="stylesheet" href="/css/precipitazioni.css">
+</head>
+<body>
+  <!-- Titolo centrale della pagina -->
+  <h1 class="w3-center">Tabella Dati OpenData</h1>
+
+  <div class="w3-margin">
+    <!-- Pulsante che riporta alla home -->
+    <button class="w3-button w3-blue" onclick="location.href='/Home'">🏠 Torna alla Home</button>
+  </div>
+  
+  <!-- Contenitore che mostra la tabella o eventuali messaggi di caricamento -->
+  <div id="contenitore-dati" class="w3-container w3-responsive">
+    Caricamento dati...
+  </div>
+
+  <script>
+    
+    // 1. Suddivide la riga su ; e rimuove virgolette e spazi obsoleti, se l'ultima cella è vuota ('') la rimuove
+    function dividiRigaCSV(riga) {
+      const celle = riga.split(';').map(cella => cella.replace(/"/g, '').trim());
+      return celle.at(-1) === '' ? celle.slice(0, -1) : celle;
+    }
+
+    // 2. Funzione che ha il compito di caricare i dati sulla tabella
+    async function caricaDati() {
+      const contenitore = document.getElementById('contenitore-dati');
+      try {
+        
+        // Fa una richiesta per recuperare il file dataVenetomm.CSV contenenti i dati delle precipitazioni
+        const risposta = await fetch('/dataVenetomm');
+        
+        // Se la risposta del server non è andata a buon fine avviene l'errore HTTP (!200-299)
+        if (!risposta.ok) {
+          contenitore.innerText = `Errore HTTP: ${risposta.status}`;
+          return;
+        }
+
+        const testo = await risposta.text();
+        const righe = testo.trim().split('\n');
+        
+        // Se non ci sono dati oltre l'intestazione, mostra messaggio
+        if (righe.length < 2) {
+          contenitore.innerText = 'Nessun dato disponibile.';
+          return;
+        }
+
+        // Estrae l'intestazione e la setta come la prima riga in posizione 0
+        const intestazione = dividiRigaCSV(righe[0]);
+        
+        // Righe dei dati, non considerando l'intestazione tramite funzione slice(1) 
+        const dati = righe.slice(1).map(dividiRigaCSV).map(r => {
+          
+            // completa o taglia le righe per allinearle all'intestazione
+            return r.length < intestazione.length
+              ? r.concat(Array(intestazione.length - r.length).fill(''))
+              : r.slice(0, intestazione.length);
+          });
+
+        // Costruzione della tabella HTML
+        let html = '<table>';
+        html += '<tr>' + intestazione.map(h => `<th>${h}</th>`).join('') + '</tr>';
+        dati.forEach(celle => {
+          if (!celle[0].trim()) return; // salta righe vuote
+          html += '<tr>' + celle.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        });
+        html += '</table>';
+        
+        // Inserisce la tabella nel contenitore
+        contenitore.innerHTML = html;
+      } catch (err) {
+        console.error('Errore caricamento dati:', err);
+        contenitore.innerText = 'Errore nel caricamento dei dati.';
+      }
+    }
+
+    window.addEventListener('load', caricaDati);
+  </script>
+</body>
+</html>

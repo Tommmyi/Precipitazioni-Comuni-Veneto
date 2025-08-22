@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elimina Dati per Comune e Anno</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Elimina Dati per Comune e Anno</h1>
+    <!-- Form per eliminare dati inserendo il comune e l'anno -->
+    <form id="delete-form" method="DELETE" action="/elimina">
+      <div>
+        <label for="anno">Anno:</label>
+        <input type="number" id="anno" name="anno" placeholder="Inserisci l'anno" required>
+      </div>
+      <div>
+        <label for="comune">Comune:</label>
+        <input type="text" id="comune" name="comune" placeholder="Inserisci il nome del comune" required>
+      </div>
+      <button type="submit">Elimina</button>
+    </form>
+
+    <!-- Pulsante per tornare alla Home -->
+    <button class="home-btn" onclick="location.href='/Home'">
+      🏠 Torna alla Home
+    </button>
+
+    <!-- Div per mostrare il messaggio di feedback (es.: operazione completata o errori) -->
+    <div id="result"></div>
+
+    <!-- Div per la visualizzazione del record eliminato -->
+    <div id="new-data-container"></div>
+
+    <!-- Aside: visualizza la lista dei comuni (con il range di anni) ottenuta dal CSV -->
+    <aside id="comuni-list">
+      <h2>Elenco Comuni</h2>
+      <ul id="comuni-list-content"></ul>  <!-- Lista non ordinata di comuni -->
+    </aside>
+  </div>
+  
+  <script>
+    let datiCSV = [];
+
+    // Scarica il CSV dal server, estrae le colonne "Comune" e "Anno" per costruire una mappa
+    async function caricaDatiCSV() {
+      try {
+        
+        // Fa una richiesta per recuperare il file dataVenetomm.CSV contenenti i dati delle precipitazioni
+        const risposta = await fetch('/dataVenetomm');
+        
+        // Se la risposta del server non è andata a buon fine avviene l'errore HTTP (!200-299)
+        if (!risposta.ok) {
+          document.getElementById('result').innerText = `Errore HTTP: ${risposta.status}`;
+          return;
+        }
+        
+        const testo = await risposta.text();
+        
+        //trim() evita spazi vuoti, split() divide il testo in righe e ogni valore diviso in ";" e rimuove eventuali virgolette obsolete
+        const righe = testo.trim().split('\n').map(riga =>
+          riga.split(';').map(cella => cella.trim().replace(/^"|"$/g, ''))
+        );
+        // Se non ci sono abbastanza dati nella riga interrompe lo script altrimenti assegna la riga in un array conetenenti i datiCSV
+        if (righe.length < 2)
+          return;
+        
+        datiCSV = righe;
+        const intestazione = righe[0];  // assegna come primo elemento dell'array l'intestazione
+
+        // Trova gli indici delle colonne "Comune" e "Anno" 
+        const indiceComune = intestazione.findIndex(h =>
+          h.toLowerCase().includes("comune")
+        );
+        const indiceAnno = intestazione.findIndex(h =>
+          h.toLowerCase().includes("anno")
+        );
+
+        if (indiceComune === -1) {
+          console.error("Colonna 'Comune' non trovata");
+          return;
+        }
+        if (indiceAnno === -1) {
+          console.error("Colonna 'Anno' non trovata");
+          return;
+        }
+
+        // Costruisce mappa: come chiave abbiamo il comune e come Set di valori gli anni corrispondenti   "Venezia": Set { "2020", "2021", "2023" },
+        const mappaAnni = {};
+        const ordineComuni = [];
+        // Salta la riga dell'intestazione del CSV e cicla tutte le altre righe 
+        righe.slice(1).forEach(riga => {
+          // Estrae da ogni riga il valore della colonna Comune e Anno specifico usando gli indici Comune e Anno
+          const comune = riga[indiceComune];
+          const anno = riga[indiceAnno];
+          // Controlla se ci sono entrambi i valori se il valore chiave comune non è stato aggiunto hasOwnProperty() allora lo aggiunge con il metodo push
+          if (comune && anno) {
+            if (!mappaAnni.hasOwnProperty(comune)) {
+              mappaAnni[comune] = new Set();
+              ordineComuni.push(comune);
+            }
+            // Aggiunge l'anno specifico al comune associato
+            mappaAnni[comune].add(anno);
+          }
+        });
+        aggiornaListaComuni(mappaAnni, ordineComuni);
+      } catch (errore) {
+        console.error("Errore nel caricamento dei dati:", errore);
+      }
+    }
+
+
+    // Aggiorna l'elenco dei comuni nell'aside laterale con ciascuno il range di anni per comune [Valore piccolo anno, Valore massimo anno]
+    function aggiornaListaComuni(mappaAnni, ordineComuni) {
+      const lista = document.getElementById('comuni-list-content');  //Id che rappresenta l'aside dei comuni
+      lista.innerHTML = "";
+      //Scorre ciascun comune nell'ordine originale, ordina gli anni delle precipitazioni del comune dal piu piccolo al piu grande [Zero Branco 2009–2030]
+      ordineComuni.forEach(comune => {
+        const anni = Array.from(mappaAnni[comune]).sort((a, b) => parseInt(a) - parseInt(b));
+        let testoAnni = "";  // Variabile dove inserirà gli anni 
+        // Se ce solo un anno mostra solo quello, altrimenti crea un intervallo separandoli con -
+        if (anni.length === 1) {
+          testoAnni = anni[0];
+        } else {
+          testoAnni = `${anni[0]}–${anni[anni.length - 1]}`;
+        }
+        // Imposta il testo con comune anno1-anno2
+        const li = document.createElement('li');
+        li.textContent = `${comune} ${testoAnni}`;
+        // Se clicco sul comune dell'aside me lo posizione nell'input type del comune nella form
+        li.addEventListener('click', () => {
+          document.getElementById('comune').value = comune;
+          document.getElementById('anno').value = "";
+        });
+        lista.appendChild(li);
+      });
+    }
+
+
+    // Gestisce l'inivio del form DELETE 
+    async function gestisciInvioEliminazione(event) {
+      event.preventDefault();  // Molto utile perchè evita il caricamento della pagina
+      
+      // Recupera i valori comune e anno eliminando eventuali spazi vuoti
+      const comune = document.getElementById('comune').value.trim();
+      const anno = document.getElementById('anno').value.trim();
+      
+      // Creo un oggetto ceh rappresenta il comune e l'anno da eliminare
+      const payload = { comune, anno };
+
+      try {
+        
+        // Invio richiesta HTTP DELETE all'endpoint /elimina presente sul server.js
+        const risposta = await fetch('/elimina', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        // Div apposito dove inserirò il risultato della eliminazione del dato
+        const resultDiv = document.getElementById('result');
+        
+        // Se la risposta del server ha avuto successo, fa vedere a schermo la stringa: Eliminati dati → Anno: ${anno}, Comune: ${comune}`
+        if (risposta.ok) {
+          resultDiv.innerText = "Record eliminato con successo!";
+          const nuovoRecord = document.createElement("div");
+          nuovoRecord.classList.add("new-data-row");
+          nuovoRecord.textContent = `Eliminati dati → Anno: ${anno}, Comune: ${comune}`;
+          const container = document.getElementById("new-data-container");
+          container.innerHTML = "";
+          container.appendChild(nuovoRecord);
+        } else {
+          
+          //const erroreJson = await risposta.json();
+          resultDiv.innerText = `Impossibile eliminare il valore (${risposta.status})`;
+        }
+      } catch (err) {
+        document.getElementById('result').innerText = "Errore di connessione al server.";
+      }
+    }
+
+    // Pulisce i messaggi e record mostrati all'utente
+    function aggiungiListenerCampi() {
+      document.querySelectorAll('#delete-form input').forEach(input => {
+        input.addEventListener('input', () => {
+          document.getElementById("new-data-container").innerHTML = "";
+          document.getElementById("result").innerText = "";
+        });
+      });
+    }
+
+    // Imposta il listener per il submit del form
+    document.getElementById('delete-form').addEventListener('submit', gestisciInvioEliminazione);
+    // Al caricamento della pagina: carica CSV e aggiunge listener
+    window.addEventListener('load', () => {
+      caricaDatiCSV();
+      aggiungiListenerCampi();
+    });
+  </script>
+</body>
+</html>

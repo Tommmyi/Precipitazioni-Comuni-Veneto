@@ -1,0 +1,119 @@
+/* Stili globali */
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #f2f2f2;
+  color: #333333;
+}
+
+h1 {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 2.5rem;
+  color: #2c3e50;
+}
+
+/* Contenitore della mappa */
+.map-container {
+  width: 90%;
+  max-width: 1200px;
+  height: 80vh;
+  margin: 20px auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative; /* Necessario per posizionare elementi con position: absolute all'interno */
+}
+
+.map-container:hover {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+}
+
+/* Elemento mappa (verrà sovrascritto con il contenuto dinamico della mappa) */
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+/* Contenitore dei pulsanti */
+.buttons {
+  text-align: center;
+  margin: 20px auto;
+}
+
+/* Stile dei pulsanti */
+.buttons button {
+  margin: 1rem;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  border: none;
+  border-radius: 8px;
+  background-color: #64b5f6;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+
+.buttons button:hover {
+  background-color: #42a5f5;
+}
+
+.buttons button:active {
+  transform: scale(0.98); /* Effetto di pressione sul clic */
+}
+
+.buttons button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(100, 181, 246, 0.5); /* Evidenzia il pulsante con un'ombra */
+}
+
+/* Legenda della mappa – posizionata in basso a destra all’interno della mappa */
+#legend {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  font-size: 14px;
+  color: #333333;
+  z-index: 1000;
+}
+
+#legend h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  text-align: center;
+}
+
+/* Voce individuale della legenda */
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+/* Scatole colorate per la legenda */
+.color-box {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border: 1px solid #cccccc;
+  border-radius: 3px;
+}
+
+.color-box.low {
+  background-color: #a8e6cf; /* Verde chiaro per basse precipitazioni */
+}
+
+.color-box.medium {
+  background-color: #ffeb3b; /* Giallo per precipitazioni medie */
+}
+
+.color-box.high {
+  background-color: #ff8a80; /* Rosso chiaro per alte precipitazioni */
+}
